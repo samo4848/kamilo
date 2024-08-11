@@ -17,9 +17,21 @@ export interface Shape {
 function DrawingPageContext({ children }: any) {
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const [shapes, setShapes] = useState<Shape[]>([]);
+  const [history, setHistory] = useState<Shape[][]>([shapes]); // State history for undo/redo
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   return (
-    <DrawingContext.Provider value={{ bottomSheetRef, shapes, setShapes }}>
+    <DrawingContext.Provider
+      value={{
+        bottomSheetRef,
+        shapes,
+        setShapes,
+        history,
+        setHistory,
+        historyIndex,
+        setHistoryIndex,
+      }}
+    >
       {children}
     </DrawingContext.Provider>
   );

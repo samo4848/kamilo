@@ -1,10 +1,28 @@
-import React from "react";
+import React, { useContext } from "react";
 import { ThemedView } from "../ThemedView";
 import { ThemedText } from "../ThemedText";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { ArrowBack, InfoBackOne, InfoBackTwo } from "@/components/icons";
+import { DrawingContext } from "../contexts/DrawingPageContext";
 
 function CustomHeader() {
+  const { historyIndex, history, setShapes, setHistoryIndex } =
+    useContext(DrawingContext);
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const previousShapes = history[historyIndex - 1];
+      setShapes(previousShapes);
+      setHistoryIndex(historyIndex - 1);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const nextShapes = history[historyIndex + 1];
+      setShapes(nextShapes);
+      setHistoryIndex(historyIndex + 1);
+    }
+  };
   return (
     <ThemedView style={styles.container}>
       <TouchableOpacity>
@@ -14,10 +32,10 @@ function CustomHeader() {
         <ThemedText style={styles.text}>Floor plan</ThemedText>
       </ThemedView>
       <ThemedView style={styles.infoIconContent}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleUndo}>
           <InfoBackOne />
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleRedo}>
           <InfoBackTwo />
         </TouchableOpacity>
       </ThemedView>

@@ -28,7 +28,14 @@ interface RectShape {
   height: number;
 }
 function Drawing() {
-  const { shapes, setShapes } = useContext(DrawingContext);
+  const {
+    shapes,
+    setShapes,
+    history,
+    setHistory,
+    setHistoryIndex,
+    historyIndex,
+  } = useContext(DrawingContext);
   const { width: canvasWidth } = Dimensions.get("window");
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
   const [currentShape, setCurrentShape] = useState<Shape | null>(null);
@@ -45,6 +52,11 @@ function Drawing() {
   const canvasWidthnew = canvasWidth - 42; // Width of the Canvas
   const canvasHeight = 400; // Height of the Canvas
 
+  const saveHistory = (newShapes: Shape[]) => {
+    const updatedHistory = history.slice(0, historyIndex + 1);
+    setHistory([...updatedHistory, newShapes]);
+    setHistoryIndex(updatedHistory.length);
+  };
   const onMoveGestureEvent = (
     event: PanGestureHandlerGestureEvent,
     shapeId: string
@@ -90,6 +102,7 @@ function Drawing() {
       startY.current = shape.y;
       //   saveState();
     }
+    saveHistory(shapes);
   };
 
   // const onResizeGestureEvent = (
@@ -189,6 +202,7 @@ function Drawing() {
       // startWidth.current = shape.width;
       // startHeight.current = shape.height;
       //   saveState();
+      saveHistory(shapes);
     }
   };
 
