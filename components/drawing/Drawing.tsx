@@ -1,4 +1,5 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import Feather from "@expo/vector-icons/Feather";
 import { ThemedView } from "../ThemedView";
 import {
   Canvas,
@@ -7,8 +8,17 @@ import {
   Rect,
   Box,
   Circle,
+  SkFont,
+  Text as SkiaText,
+  useFont,
 } from "@shopify/react-native-skia";
-import { Dimensions, StyleSheet, View } from "react-native";
+import {
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  Text,
+} from "react-native";
 import {
   GestureHandlerRootView,
   HandlerStateChangeEvent,
@@ -17,9 +27,16 @@ import {
   State,
   TapGestureHandler,
   TapGestureHandlerGestureEvent,
+  TextInput,
 } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DrawingContext, Shape } from "../contexts/DrawingPageContext";
+import { Colors } from "@/constants/Colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { pixelsToCm } from "@/util/pixelsToCm";
+import ShapeText from "./component/ShapeText";
+import ResizeShape from "./component/resizeShape";
+import ColorPickerComponent from "./component/ColorPicker";
 
 interface RectShape {
   x: number;
@@ -35,10 +52,17 @@ function Drawing() {
     setHistory,
     setHistoryIndex,
     historyIndex,
+    selectedShapeId,
+    setSelectedShapeId,
   } = useContext(DrawingContext);
   const { width: canvasWidth } = Dimensions.get("window");
-  const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
+
   const [currentShape, setCurrentShape] = useState<Shape | null>(null);
+  const [scale, setScale] = useState<number>(1);
+  const [textSize, setTextSize] = useState<{ width: number; height: number }>({
+    width: 25,
+    height: 25,
+  });
 
   const resizeRef = useRef<any>(null);
   const panRef = useRef<any>(null);
@@ -49,9 +73,22 @@ function Drawing() {
   const startHeight = useRef(currentShape?.height || 0);
   const startRadius = useRef(currentShape?.radius || 0);
 
+  const baseFontSize = 16;
+  const font: SkFont | null | any = useFont(
+    require("../../assets/fonts/Lato-Regular.ttf"),
+    baseFontSize * scale
+  );
+
   const canvasWidthnew = canvasWidth - 42; // Width of the Canvas
   const canvasHeight = 400; // Height of the Canvas
 
+  // useEffect(() => {
+  //   if (font && currentShape?.text) {
+  //     const { width } = font.measureText(currentShape?.text);
+  //     const height = baseFontSize * scale; // Approximation, you can refine it.
+  //     setTextSize({ width, height });
+  //   }
+  // }, [font, currentShape?.text, scale]);
   const saveHistory = (newShapes: Shape[]) => {
     const updatedHistory = history.slice(0, historyIndex + 1);
     setHistory([...updatedHistory, newShapes]);
@@ -238,144 +275,500 @@ function Drawing() {
     setSelectedShapeId(null);
   };
 
+  const handleChangeText = (text: string, shapeId: string) => {
+    const { width } = font.measureText(text);
+    const newShapes = shapes?.map((item: Shape) => {
+      if (item?.id === shapeId) {
+        return {
+          ...item,
+          text,
+        };
+      } else return item;
+    });
+    setTextSize({ width, height: baseFontSize * scale });
+    setShapes(newShapes);
+  };
+
+  const handleDeleteShape = (shapeId: string) => {
+    const newShapes = shapes.filter((item: Shape) => item.id !== shapeId);
+    setShapes(newShapes);
+  };
+
+  const changeShapeColor = (color: string, shapeId: string) => {
+    const newShapes = shapes.map((shape: Shape) => {
+      if (shape?.id === shapeId) {
+        return {
+          ...shape,
+          color: color,
+        };
+      } else return shape;
+    });
+    setShapes(newShapes);
+  };
+
   return (
     <ThemedView style={{ flex: 1 }}>
       <Canvas style={{ backgroundColor: "#D9D9D9", height: 400 }}>
-        {shapes.map((shape: Shape) =>
-          shape.type === "rect" ? (
-            <Rect
-              key={shape.id}
-              x={shape.x || 0}
-              y={shape.y || 0}
-              width={shape.width || 0}
-              height={shape.height || 0}
-              color={Skia.Color(shape.color)}
-            />
-          ) : (
-            <Circle
-              key={shape.id}
-              cx={shape.x + (shape.radius || 0)}
-              cy={shape.y + (shape.radius || 0)}
-              r={shape.radius || 0}
-              color={Skia.Color(shape.color)}
-            />
-          )
-        )}
-      </Canvas>
+        {shapes.map((shape: Shape) => {
+          if (shape?.type === "rect") {
+            return (
+              <Group>
+                <Rect
+                  key={shape.id}
+                  x={shape.x || 0}
+                  y={shape.y || 0}
+                  width={shape.width || 0}
+                  height={shape.height || 0}
+                  color={Skia.Color(shape.color)}
+                />
+                <Group>
+                  {[...Array(shape?.seats)?.keys()]?.map((item, index) => {
+                    let x = 0;
+                    let y = 0;
 
+                    if (index % 2) {
+                      x = shape.x + (shape?.width || 0) - 30;
+                      y = shape.y + 30 * index;
+                    } else {
+                      x = shape.x + 30;
+                      y = shape.y + 30 + 30 * index;
+                    }
+
+                    if ((shape?.width || 0) < 130) {
+                      x = shape.x + 30;
+                      y = shape.y + 30 + 50 * index;
+                    }
+                    return (
+                      <Group>
+                        <Circle
+                          cx={x}
+                          cy={y}
+                          r={15}
+                          color={Skia.Color("#FFF")}
+                        />
+                        <SkiaText
+                          key={shape?.id}
+                          font={font}
+                          x={x - 5}
+                          y={y + 5}
+                          color={Colors.dark.black}
+                          text={`${item + 1}`}
+                        />
+                      </Group>
+                    );
+                  })}
+                </Group>
+              </Group>
+            );
+          } else if (shape?.type === "circle") {
+            return (
+              <Circle
+                key={shape.id}
+                cx={shape.x + (shape.radius || 0)}
+                cy={shape.y + (shape.radius || 0)}
+                r={shape.radius || 0}
+                color={Skia.Color(shape.color)}
+              />
+            );
+          } else if (shape?.type === "icon") {
+            return (
+              <SkiaText
+                key={shape?.id}
+                font={font}
+                x={0}
+                y={0}
+                text={shape?.name || ""}
+              />
+            );
+          } else {
+            return (
+              <SkiaText
+                key={shape.id}
+                text={shape.text || ""}
+                y={shape?.y}
+                x={shape?.x}
+                font={font}
+                color={shape.color}
+              />
+            );
+          }
+        })}
+      </Canvas>
+      <TapGestureHandler key={"mian_top"}>
+        <TouchableOpacity
+          onPress={() => setSelectedShapeId("null")}
+          style={{
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            position: "absolute",
+            // backgroundColor: "red",
+          }}
+        ></TouchableOpacity>
+      </TapGestureHandler>
       {shapes.map((shape: Shape) => {
         const { left, top, width, height } = getShapeDimensions(shape);
-
-        return (
-          <TapGestureHandler
-            key={shape.id}
-            onHandlerStateChange={(event: TapGestureHandlerGestureEvent) => {
-              if (event.nativeEvent.state === State.END) {
-                handleShapeTap(shape.id);
-              }
-            }}
-          >
-            <View
-              style={[
-                styles.shapeOverlay,
-                {
-                  left,
-                  top,
-                  width,
-                  height,
-                  position: "absolute",
-                  backgroundColor: "transparent", // Make the overlay invisible
-                },
-              ]}
-            />
-          </TapGestureHandler>
-        );
-      })}
-      {shapes.map((shape: Shape) =>
-        shape.id === selectedShapeId ? (
-          <PanGestureHandler
-            key={`move-${shape.id}`}
-            ref={panRef}
-            onGestureEvent={(event) => onMoveGestureEvent(event, shape.id)}
-            onHandlerStateChange={(event) =>
-              onMoveHandlerStateChange(event, shape.id)
-            }
-          >
-            <View
-              style={{
-                position: "absolute",
-                // backgroundColor: "green",
-                width:
-                  shape.type === "circle"
-                    ? (shape.radius || 1) * 2
-                    : shape?.width,
-                height:
-                  shape.type === "circle"
-                    ? (shape?.radius || 0) * 2
-                    : shape?.height,
-                left: shape.x,
-                top: shape.y,
-                borderRadius: shape.type === "circle" ? shape.radius : 0,
+        if (shape.type !== "text") {
+          return (
+            <TapGestureHandler
+              key={shape.id}
+              onHandlerStateChange={(event: TapGestureHandlerGestureEvent) => {
+                if (event.nativeEvent.state === State.END) {
+                  handleShapeTap(shape.id);
+                }
               }}
             >
-              {/* <View
+              <View
+                style={[
+                  shape.id === selectedShapeId ? styles.shapeOverlay : {},
+                  {
+                    left,
+                    top,
+                    width,
+                    height,
+                    position: "absolute",
+                    backgroundColor: "transparent", // Make the overlay invisible
+                  },
+                ]}
+              ></View>
+            </TapGestureHandler>
+          );
+        } else {
+          return (
+            <TapGestureHandler
+              key={shape.id}
+              onHandlerStateChange={(event: TapGestureHandlerGestureEvent) => {
+                if (event.nativeEvent.state === State.END) {
+                  handleShapeTap(shape.id);
+                }
+              }}
+            >
+              <View
+                style={[
+                  shape.id === selectedShapeId ? styles.shapeOverlay : {},
+                  {
+                    left: shape.x,
+                    top: shape.y - textSize?.height,
+                    width: textSize?.width + 35,
+                    height: textSize?.height + 16,
+                    position: "absolute",
+                    backgroundColor: "transparent", // Make the overlay invisible
+                  },
+                ]}
+              >
+                {shape.id === selectedShapeId && (
+                  <TextInput
+                    onChangeText={(text) => handleChangeText(text, shape.id)}
+                    value={shape.text}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      fontSize: baseFontSize,
+                      paddingHorizontal: 15,
+                      paddingVertical: 8,
+                      backgroundColor: "#FFF",
+                      borderColor: Colors.gray.gray_30,
+                      borderWidth: 1,
+                      color: shape.color,
+                    }}
+                  />
+                )}
+              </View>
+            </TapGestureHandler>
+          );
+        }
+      })}
+      {shapes.map((shape: Shape) => {
+        if (shape.id === selectedShapeId && shape.type !== "text") {
+          return (
+            <PanGestureHandler
+              key={`move-${shape.id}`}
+              ref={panRef}
+              onGestureEvent={(event) => onMoveGestureEvent(event, shape.id)}
+              onHandlerStateChange={(event) =>
+                onMoveHandlerStateChange(event, shape.id)
+              }
+            >
+              <View
                 style={{
-                  width: shape.width,
-                  height: shape.height,
-                  backgroundColor: "trans",
+                  position: "absolute",
+                  // backgroundColor: "green",
+                  width:
+                    shape.type === "circle"
+                      ? (shape.radius || 1) * 2
+                      : shape?.width,
+                  height:
+                    shape.type === "circle"
+                      ? (shape?.radius || 0) * 2
+                      : shape?.height,
+                  left: shape.x,
+                  top: shape.y,
+                  // borderRadius: shape.type === "circle" ? shape.radius : 0,
                 }}
-              /> */}
+              >
+                {/* <View
+              style={{
+                width: shape.width,
+                height: shape.height,
+                backgroundColor: "trans",
+              }}
+            /> */}
+              </View>
+            </PanGestureHandler>
+          );
+        } else if (shape.id === selectedShapeId && shape.type === "text") {
+          return (
+            <View style={{ position: "absolute" }}>
+              <PanGestureHandler
+                ref={panRef}
+                onGestureEvent={(event) => onMoveGestureEvent(event, shape.id)}
+                onHandlerStateChange={(event) =>
+                  onMoveHandlerStateChange(event, shape.id)
+                }
+              >
+                <View
+                  style={{
+                    backgroundColor: "#FFF",
+                    width: 40,
+                    height: 40,
+                    position: "absolute",
+                    left: shape.x + 47,
+                    top: shape.y - textSize.height - 40,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    elevation: 20,
+                    shadowColor: "#52006A",
+                  }}
+                >
+                  <Feather name="move" size={25} />
+                </View>
+              </PanGestureHandler>
+              <View>
+                <View
+                  style={{
+                    backgroundColor: "#FFF",
+                    width: 40,
+                    height: 40,
+                    left: shape.x + 95,
+                    top: shape.y - textSize.height - 40,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    elevation: 20,
+                    shadowColor: "#52006A",
+                  }}
+                >
+                  <TouchableOpacity onPress={() => handleDeleteShape(shape.id)}>
+                    <MaterialCommunityIcons name="delete" size={25} />
+                  </TouchableOpacity>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: "#FFF",
+                    width: 40,
+                    height: 40,
+                    left: shape.x,
+                    top: shape.y - textSize.height - 80,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    elevation: 20,
+                    shadowColor: "#52006A",
+                  }}
+                >
+                  {/* <TouchableOpacity onPress={() => handleDeleteShape(shape.id)}>
+                    <MaterialCommunityIcons name="delete" size={25} />
+                  </TouchableOpacity> */}
+                  <ColorPickerComponent
+                    defaultColor={shape.color}
+                    getColorPicker={(color: string) =>
+                      changeShapeColor(color, shape?.id)
+                    }
+                  />
+                </View>
+              </View>
             </View>
-          </PanGestureHandler>
-        ) : null
-      )}
+          );
+        } else return null;
+      })}
       {shapes.map((shape: Shape) =>
         shape.id === selectedShapeId && shape.type === "rect" ? (
-          <PanGestureHandler
-            key={`resize-${shape.id}`}
-            ref={resizeRef}
-            onGestureEvent={(event) => onResizeGestureEvent(event, shape?.id)}
-            onHandlerStateChange={(event) =>
-              onResizeHandlerStateChange(event, shape?.id)
-            }
-          >
-            <View
-              style={[
-                styles.resizer,
-                {
-                  left: shape.x + (shape.width || 0) - 20,
-                  top: shape.y + (shape.height || 0) - 20,
-                },
-              ]}
+          <View style={{ position: "absolute" }}>
+            <PanGestureHandler
+              key={`resize-${shape.id}`}
+              ref={resizeRef}
+              onGestureEvent={(event) => onResizeGestureEvent(event, shape?.id)}
+              onHandlerStateChange={(event) =>
+                onResizeHandlerStateChange(event, shape?.id)
+              }
             >
-              <View style={styles.resizerHandle} />
-            </View>
-          </PanGestureHandler>
+              <View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x - 20,
+                    top: shape.y - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x + (shape.width || 0) - 20,
+                    top: shape.y - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x - 20,
+                    top: shape.y + (shape.height || 0) - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={[
+                    styles.resizer,
+                    {
+                      // backgroundColor: "yellow",
+                      left: shape.x + (shape.width || 0) - 20,
+                      top: shape.y + (shape.height || 0) - 20,
+                    },
+                  ]}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+              </View>
+            </PanGestureHandler>
+            <ShapeText
+              left={shape.x}
+              top={shape.y}
+              width={shape.width || 0}
+              height={shape.height || 0}
+              handleDeleteShape={handleDeleteShape}
+              shapeId={shape.id}
+              shapeColor={shape.color}
+              handleChangeColor={changeShapeColor}
+            />
+          </View>
         ) : null
       )}
       {shapes.map((shape: Shape) =>
         shape.id === selectedShapeId && shape.type === "circle" ? (
-          <PanGestureHandler
-            key={`resize-${shape.id}`}
-            ref={resizeRef}
-            onGestureEvent={(event) => onResizeGestureEvent(event, shape?.id)}
-            onHandlerStateChange={(event) =>
-              onResizeHandlerStateChange(event, shape?.id)
-            }
-          >
-            <View
-              style={[
-                styles.resizer,
-                {
-                  // backgroundColor: "yellow",
-                  left: shape.x + (shape.radius || 1) * 2 - 20,
-                  top: shape.y + (shape?.radius || 1) * 2 - (shape.radius || 0),
-                },
-              ]}
+          <View style={{ position: "absolute" }}>
+            <PanGestureHandler
+              key={`resize-${shape.id}`}
+              ref={resizeRef}
+              onGestureEvent={(event) => onResizeGestureEvent(event, shape?.id)}
+              onHandlerStateChange={(event) =>
+                onResizeHandlerStateChange(event, shape?.id)
+              }
             >
-              <View style={styles.resizerHandle} />
-            </View>
-          </PanGestureHandler>
+              {/* <ResizeShape
+                x={shape.x}
+                y={shape.y}
+                width={shapes.width || 0}
+                height={shape.height || 0}
+              /> */}
+              <View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x - 20,
+                    top: shape.y - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x + (shape.radius || 0) * 2 - 20,
+                    top: shape.y - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x - 20,
+                    top: shape.y + (shape.radius || 0) * 2 - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={[
+                    styles.resizer,
+                    {
+                      // backgroundColor: "yellow",
+                      left: shape.x + (shape.radius || 0) * 2 - 20,
+                      top: shape.y + (shape.radius || 0) * 2 - 20,
+                    },
+                  ]}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+              </View>
+              {/* <View
+                style={[
+                  styles.resizer,
+                  {
+                    // backgroundColor: "yellow",
+                    left: shape.x + (shape.radius || 1) * 2 - 20,
+                    top: shape.y + (shape?.radius || 1) * 2 - 20,
+                  },
+                ]}
+              >
+                
+                <View style={styles.resizerHandle} />
+              </View> */}
+            </PanGestureHandler>
+            <ShapeText
+              left={shape.x}
+              top={shape.y}
+              width={shape.x + (shape.radius || 1) * 2 || 0}
+              height={shape.y + (shape?.radius || 1) * 2 || 0}
+              handleDeleteShape={handleDeleteShape}
+              shapeId={shape.id}
+              handleChangeColor={changeShapeColor}
+              shapeColor={shape.color}
+            />
+          </View>
         ) : null
       )}
     </ThemedView>
@@ -416,7 +809,7 @@ const styles = StyleSheet.create({
     // borderTopStartRadius: 25,
   },
   shapeOverlay: {
-    borderColor: "transparent",
+    // borderColor: "transparent",
     borderWidth: 1,
   },
 });

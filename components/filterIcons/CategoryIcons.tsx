@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import { ThemedView } from "../ThemedView";
 import { ThemedText } from "../ThemedText";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import { StyleSheet } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Colors } from "@/constants/Colors";
+import { useImage } from "@shopify/react-native-skia";
+import { DrawingContext, Shape } from "../contexts/DrawingPageContext";
 
 type Icons = {
   name: string;
@@ -14,22 +16,65 @@ interface IPropsCategoryIcon {
   name: string;
   icons: Icons[];
 }
+
 function CategoryIcons({ category, name, icons }: IPropsCategoryIcon) {
+  const { setShapes } = useContext(DrawingContext);
+  // const [iconUriState, setIconUriState] = useState(
+  //   "data:image/svg+xml,%5Bobject%20Object%5D"
+  // );
+  // let iconImage;
+  // if (iconUriState !== "") {
+  //   iconImage = useImage(iconUriState);
+  // }
+
+  const handleSelectedMaterialIcon = (name: string) => {
+    const newIcon = {
+      type: "icon",
+      name: "home",
+      size: 40,
+      color: "black",
+      x: 200,
+      y: 200,
+      scale: 1,
+    };
+    setShapes((prevState: Shape[]) => [...prevState, newIcon]);
+    // const Icon: any = (
+    //   <MaterialCommunityIcons
+    //     name={name}
+    //     size={50}
+    //     color="#000"
+    //     style={{ width: 100, height: 100 }}
+    //   />
+    // );
+    // console.log(Icon);
+    // const iconUri = `data:image/svg+xml,${encodeURIComponent(Icon)}`;
+
+    // setIconUriState(iconUri);
+    // console.log(useOnlineStatus(iconUri));
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ThemedText style={styles.title}>{name}</ThemedText>
       <ThemedView style={styles.containerIcons}>
         {icons?.map((item, index) => {
           return (
-            <ThemedView key={item.name + index} style={styles.iconItem}>
+            <View key={item.name + index} style={styles.iconItem}>
               {category === "MaterialCommunityIcons" && (
-                <MaterialCommunityIcons name={item.name} size={item.size} />
+                <TouchableOpacity
+                  onPress={() => handleSelectedMaterialIcon(item.name)}
+                >
+                  <MaterialCommunityIcons name={item.name} size={item.size} />
+                  <ThemedText style={styles.iconName}>{item.name}</ThemedText>
+                </TouchableOpacity>
               )}
               {category === "MaterialIcons" && (
-                <MaterialIcons name={item.name} size={item.size} />
+                <TouchableOpacity>
+                  <MaterialIcons name={item.name} size={item.size} />
+                  <ThemedText style={styles.iconName}>{item.name}</ThemedText>
+                </TouchableOpacity>
               )}
-              <ThemedText style={styles.iconName}>{item.name}</ThemedText>
-            </ThemedView>
+            </View>
           );
         })}
       </ThemedView>

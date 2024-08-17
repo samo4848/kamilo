@@ -14,7 +14,8 @@ import { DrawingContext, Shape } from "../contexts/DrawingPageContext";
 import { Colors } from "@/constants/Colors";
 
 function CustomFooter() {
-  const { bottomSheetRef, setShapes } = useContext(DrawingContext);
+  const { bottomSheetRef, setShapes, setSelectedShapeId } =
+    useContext(DrawingContext);
 
   const expandHandler = useCallback(() => {
     bottomSheetRef.current?.expand();
@@ -31,6 +32,7 @@ function CustomFooter() {
       color: Colors.gray.gray_50,
     };
     setShapes((shapes: Shape[]) => [...shapes, newShape]);
+    setSelectedShapeId(newShape?.id);
   };
   const handleAddCircle = () => {
     const newShape: Shape = {
@@ -43,6 +45,21 @@ function CustomFooter() {
     };
 
     setShapes((shapes: Shape[]) => [...shapes, newShape]);
+    setSelectedShapeId(newShape?.id);
+  };
+
+  const handleAddText = () => {
+    const newShape: Shape = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: "text",
+      x: 50,
+      y: 50,
+      text: "Text",
+      color: Colors.gray.gray_50,
+    };
+
+    setShapes((shapes: Shape[]) => [...shapes, newShape]);
+    setSelectedShapeId(newShape?.id);
   };
   return (
     <ThemedView style={styles.container}>
@@ -57,7 +74,7 @@ function CustomFooter() {
         <CircleIcon />
         <ThemedText style={styles.textItem}>Circle</ThemedText>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.containerItem}>
+      <TouchableOpacity style={styles.containerItem} onPress={handleAddText}>
         <TextIcon />
         <ThemedText style={styles.textItem}>Text</ThemedText>
       </TouchableOpacity>
