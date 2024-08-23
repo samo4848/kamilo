@@ -4,7 +4,11 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useCallback, useContext } from "react";
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import ColorPickerComponent from "./ColorPicker";
-import { DrawingContext } from "@/components/contexts/DrawingPageContext";
+import {
+  DrawingContext,
+  SeatsType,
+  Shape,
+} from "@/components/contexts/DrawingPageContext";
 
 interface IProps {
   left: number;
@@ -26,13 +30,18 @@ function ShapeText({
   shapeColor,
   handleChangeColor,
 }: IProps) {
-  const { bottomSheetRefSeats } = useContext(DrawingContext);
+  const { bottomSheetRefSeats, setEditSeats } = useContext(DrawingContext);
 
   const handleChangeColorFunction = (color: string) => {
     handleChangeColor(color, shapeId);
   };
 
   const expandHandler = useCallback(() => {
+    setEditSeats({
+      id: "",
+      numberOfSeats: 0,
+      tableNumber: 0,
+    });
     bottomSheetRefSeats.current?.expand();
   }, []);
   if (width && height) {

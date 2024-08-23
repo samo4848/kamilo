@@ -5,44 +5,28 @@ import {
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Colors } from "@/constants/Colors";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 
-function SeatsCounter() {
-  const { selectedShapeId, setShapes, shapes } = useContext(DrawingContext);
+interface IPropsSeatsCounter {
+  getCountNumber: (n: number) => void;
+}
+function SeatsCounter({ getCountNumber }: IPropsSeatsCounter) {
+  const { editSeats } = useContext(DrawingContext);
   const [counter, setCounter] = useState(0);
   const increaseCounter = () => {
-    const newShapes = shapes.map((shape: Shape) => {
-      if (shape?.id === selectedShapeId) {
-        return {
-          ...shape,
-          seats: counter + 1,
-        };
-      } else {
-        return shape;
-      }
-    });
-
     setCounter(counter + 1);
-    setShapes(newShapes);
+    getCountNumber(counter + 1);
   };
   const decreaseCounter = () => {
     if (counter >= 1) {
-      const newShapes = shapes.map((shape: Shape) => {
-        if (shape?.id === selectedShapeId) {
-          return {
-            ...shape,
-            seats: counter - 1,
-          };
-        } else {
-          return shape;
-        }
-      });
       setCounter(counter - 1);
-      setShapes(newShapes);
+      getCountNumber(counter - 1);
     }
   };
-
+  useEffect(() => {
+    setCounter(editSeats?.numberOfSeats);
+  }, [editSeats?.tableNumber]);
   return (
     <ThemedView style={styles.container}>
       <TouchableOpacity onPress={decreaseCounter}>

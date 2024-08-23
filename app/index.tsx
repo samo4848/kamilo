@@ -89,7 +89,7 @@ function HomePage() {
       {
         id: Math.random().toString(36).substr(2, 9),
         floorNumber: floorCounter + 1,
-        shapes: shapes,
+        shapes: [],
       },
     ]);
     setFloorCounter(floorCounter + 1);

@@ -6,6 +6,7 @@ import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { useImage } from "@shopify/react-native-skia";
 import { DrawingContext, Shape } from "../contexts/DrawingPageContext";
+import CaptureIcon from "./CaptureIcon";
 
 type Icons = {
   name: string;
@@ -18,7 +19,8 @@ interface IPropsCategoryIcon {
 }
 
 function CategoryIcons({ category, name, icons }: IPropsCategoryIcon) {
-  const { setShapes } = useContext(DrawingContext);
+  const { setShapes, bottomSheetRef } = useContext(DrawingContext);
+  const [selectedIcon, setSelectedIcon] = useState("");
   // const [iconUriState, setIconUriState] = useState(
   //   "data:image/svg+xml,%5Bobject%20Object%5D"
   // );
@@ -28,16 +30,18 @@ function CategoryIcons({ category, name, icons }: IPropsCategoryIcon) {
   // }
 
   const handleSelectedMaterialIcon = (name: string) => {
-    const newIcon = {
-      type: "icon",
-      name: "home",
-      size: 40,
-      color: "black",
-      x: 200,
-      y: 200,
-      scale: 1,
-    };
-    setShapes((prevState: Shape[]) => [...prevState, newIcon]);
+    bottomSheetRef.current?.close();
+    setSelectedIcon(name);
+    // const newIcon = {
+    //   type: "icon",
+    //   name: "home",
+    //   size: 40,
+    //   color: "black",
+    //   x: 200,
+    //   y: 200,
+    //   scale: 1,
+    // };
+    // setShapes((prevState: Shape[]) => [...prevState, newIcon]);
     // const Icon: any = (
     //   <MaterialCommunityIcons
     //     name={name}
@@ -55,6 +59,7 @@ function CategoryIcons({ category, name, icons }: IPropsCategoryIcon) {
 
   return (
     <ThemedView style={styles.container}>
+      {selectedIcon !== "" && <CaptureIcon name={selectedIcon} />}
       <ThemedText style={styles.title}>{name}</ThemedText>
       <ThemedView style={styles.containerIcons}>
         {icons?.map((item, index) => {

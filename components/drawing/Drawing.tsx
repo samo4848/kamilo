@@ -11,6 +11,7 @@ import {
   SkFont,
   Text as SkiaText,
   useFont,
+  Image as SkiaImageComponent,
 } from "@shopify/react-native-skia";
 import {
   Dimensions,
@@ -18,6 +19,7 @@ import {
   TouchableOpacity,
   View,
   Text,
+  TouchableWithoutFeedback,
 } from "react-native";
 import {
   GestureHandlerRootView,
@@ -30,13 +32,18 @@ import {
   TextInput,
 } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { DrawingContext, Shape } from "../contexts/DrawingPageContext";
+import {
+  DrawingContext,
+  SeatsType,
+  Shape,
+} from "../contexts/DrawingPageContext";
 import { Colors } from "@/constants/Colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { pixelsToCm } from "@/util/pixelsToCm";
 import ShapeText from "./component/ShapeText";
 import ResizeShape from "./component/resizeShape";
 import ColorPickerComponent from "./component/ColorPicker";
+import { calculatePosition } from "@/util/calculatePosition";
 
 interface RectShape {
   x: number;
@@ -54,6 +61,8 @@ function Drawing() {
     historyIndex,
     selectedShapeId,
     setSelectedShapeId,
+    setEditSeats,
+    bottomSheetRefSeats,
   } = useContext(DrawingContext);
   const { width: canvasWidth } = Dimensions.get("window");
 
@@ -184,7 +193,7 @@ function Drawing() {
     let newRadius = startRadius.current + Math.max(translationX, translationY);
 
     // Boundary checks for resize event
-    if (shape.type === "rect") {
+    if (shape.type === "rect" || shape.type === "icon") {
       if (newWidth < 50) newWidth = 50; // Minimum width
       if (newHeight < 50) newHeight = 50; // Minimum height
       if (shape.x + newWidth > canvasWidthnew)
@@ -244,6 +253,14 @@ function Drawing() {
   };
 
   const getShapeDimensions = (shape: Shape) => {
+    if (shape.type === "icon") {
+      return {
+        left: shape.x,
+        top: shape.y,
+        width: shape.width,
+        height: shape.height,
+      };
+    }
     return {
       left: shape.x,
       top: shape.y,
@@ -306,13 +323,30 @@ function Drawing() {
     setShapes(newShapes);
   };
 
+  const handleSelectedSeats = (shapeId: string, seatId: string) => {
+    setSelectedShapeId(shapeId);
+    const findShape = shapes?.find((sh: Shape) => sh.id === shapeId);
+    const seats = findShape?.seats?.find(
+      (seat: SeatsType) => seat.id === seatId
+    );
+    console.log("seatId: " + seats?.id);
+    console.log("seatsTable number ", seats?.tableNumber);
+    console.log("number of seats ", seats?.numberOfSeats);
+    setEditSeats({
+      id: seats?.id,
+      tableNumber: seats?.tableNumber,
+      numberOfSeats: seats?.numberOfSeats,
+    });
+    bottomSheetRefSeats.current?.expand();
+  };
+
   return (
     <ThemedView style={{ flex: 1 }}>
       <Canvas style={{ backgroundColor: "#D9D9D9", height: 400 }}>
         {shapes.map((shape: Shape) => {
           if (shape?.type === "rect") {
             return (
-              <Group>
+              <Group key={"group" + shape.id}>
                 <Rect
                   key={shape.id}
                   x={shape.x || 0}
@@ -322,42 +356,101 @@ function Drawing() {
                   color={Skia.Color(shape.color)}
                 />
                 <Group>
-                  {[...Array(shape?.seats)?.keys()]?.map((item, index) => {
-                    let x = 0;
-                    let y = 0;
+                  {shape?.seats?.map((seat: SeatsType, index) => {
+                    const { x, y } = calculatePosition(shape, index);
+                    // let x = 0;
+                    // let y = 0;
+                    // if (index % 2) {
+                    //   x = shape.x + (shape?.width || 0) - 30;
+                    //   y = shape.y + 30 * index;
+                    // } else {
+                    //   x = shape.x + 30;
+                    //   y = shape.y + 30 + 30 * index;
+                    // }
 
-                    if (index % 2) {
-                      x = shape.x + (shape?.width || 0) - 30;
-                      y = shape.y + 30 * index;
+                    // if ((shape?.width || 0) < 130) {
+                    //   x = shape.x + 30;
+                    //   y = shape.y + 30 + 50 * index;
+                    // }
+                    if (seat.type === "rect") {
+                      return (
+                        <Group key={"seats-group" + seat?.id}>
+                          <Circle
+                            cx={x}
+                            cy={y}
+                            r={15}
+                            color={Skia.Color("#FFF")}
+                          />
+                          <SkiaText
+                            key={shape?.id}
+                            font={font}
+                            x={x - 5}
+                            y={y + 5}
+                            color={Colors.dark.black}
+                            text={`${1}`}
+                          />
+                        </Group>
+                      );
                     } else {
-                      x = shape.x + 30;
-                      y = shape.y + 30 + 30 * index;
+                      return (
+                        <Group key={"seats-group" + seat?.id}>
+                          <Circle
+                            cx={x}
+                            cy={y}
+                            r={seat?.raduse || 0}
+                            color={Skia.Color("#FFF")}
+                          />
+                          <SkiaText
+                            key={shape?.id}
+                            font={font}
+                            x={x - 5}
+                            y={y + 5}
+                            color={Colors.dark.black}
+                            text={`${seat?.tableNumber}`}
+                          />
+                        </Group>
+                      );
                     }
-
-                    if ((shape?.width || 0) < 130) {
-                      x = shape.x + 30;
-                      y = shape.y + 30 + 50 * index;
-                    }
-                    return (
-                      <Group>
-                        <Circle
-                          cx={x}
-                          cy={y}
-                          r={15}
-                          color={Skia.Color("#FFF")}
-                        />
-                        <SkiaText
-                          key={shape?.id}
-                          font={font}
-                          x={x - 5}
-                          y={y + 5}
-                          color={Colors.dark.black}
-                          text={`${item + 1}`}
-                        />
-                      </Group>
-                    );
                   })}
                 </Group>
+                {/* <Group>
+                  {(shape?.seats || 0) > 0 &&
+                    [...Array(shape?.seats)?.keys()]?.map((item, index) => {
+                      let x = 0;
+                      let y = 0;
+
+                      if (index % 2) {
+                        x = shape.x + (shape?.width || 0) - 30;
+                        y = shape.y + 30 * index;
+                      } else {
+                        x = shape.x + 30;
+                        y = shape.y + 30 + 30 * index;
+                      }
+
+                      if ((shape?.width || 0) < 130) {
+                        x = shape.x + 30;
+                        y = shape.y + 30 + 50 * index;
+                      }
+                      return (
+                        <Group>
+                          <Circle
+                            cx={x}
+                            cy={y}
+                            r={15}
+                            color={Skia.Color("#FFF")}
+                          />
+                          <SkiaText
+                            key={shape?.id}
+                            font={font}
+                            x={x - 5}
+                            y={y + 5}
+                            color={Colors.dark.black}
+                            text={`${item + 1}`}
+                          />
+                        </Group>
+                      );
+                    })}
+                </Group> */}
               </Group>
             );
           } else if (shape?.type === "circle") {
@@ -371,15 +464,18 @@ function Drawing() {
               />
             );
           } else if (shape?.type === "icon") {
-            return (
-              <SkiaText
-                key={shape?.id}
-                font={font}
-                x={0}
-                y={0}
-                text={shape?.name || ""}
-              />
-            );
+            if (shape?.image) {
+              return (
+                <SkiaImageComponent
+                  key={shape.id}
+                  image={shape?.image}
+                  x={shape.x}
+                  y={shape.y}
+                  width={shape.width || 0}
+                  height={shape.height || 0}
+                />
+              );
+            } else return null;
           } else {
             return (
               <SkiaText
@@ -407,12 +503,49 @@ function Drawing() {
           }}
         ></TouchableOpacity>
       </TapGestureHandler>
+      {shapes?.map((shape: Shape) => {
+        if (shape?.type === "rect") {
+          return shape?.seats?.map((seat, index) => {
+            const { x, y } = calculatePosition(shape, index);
+            return (
+              <TapGestureHandler key={"tap-seat" + seat?.id}>
+                <TouchableWithoutFeedback
+                  onPress={() => handleSelectedSeats(shape?.id, seat?.id)}
+                  style={{
+                    top: y - 15,
+                    left: x - 15,
+                    width: 30,
+                    height: 30,
+                    borderRadius: 15,
+                    position: "absolute",
+                    // backgroundColor: "red",
+                    zIndex: 100,
+                  }}
+                >
+                  <View
+                    style={{
+                      top: y - 15,
+                      left: x - 15,
+                      width: 30,
+                      height: 30,
+                      borderRadius: 15,
+                      position: "absolute",
+                      // backgroundColor: "green",
+                      zIndex: 100,
+                    }}
+                  ></View>
+                </TouchableWithoutFeedback>
+              </TapGestureHandler>
+            );
+          });
+        } else return null;
+      })}
       {shapes.map((shape: Shape) => {
         const { left, top, width, height } = getShapeDimensions(shape);
         if (shape.type !== "text") {
           return (
             <TapGestureHandler
-              key={shape.id}
+              key={"tap-text" + shape.id}
               onHandlerStateChange={(event: TapGestureHandlerGestureEvent) => {
                 if (event.nativeEvent.state === State.END) {
                   handleShapeTap(shape.id);
@@ -437,7 +570,7 @@ function Drawing() {
         } else {
           return (
             <TapGestureHandler
-              key={shape.id}
+              key={"top-input" + shape.id}
               onHandlerStateChange={(event: TapGestureHandlerGestureEvent) => {
                 if (event.nativeEvent.state === State.END) {
                   handleShapeTap(shape.id);
@@ -519,7 +652,10 @@ function Drawing() {
           );
         } else if (shape.id === selectedShapeId && shape.type === "text") {
           return (
-            <View style={{ position: "absolute" }}>
+            <View
+              style={{ position: "absolute" }}
+              key={"move-text" + shape?.id}
+            >
               <PanGestureHandler
                 ref={panRef}
                 onGestureEvent={(event) => onMoveGestureEvent(event, shape.id)}
@@ -592,7 +728,7 @@ function Drawing() {
       })}
       {shapes.map((shape: Shape) =>
         shape.id === selectedShapeId && shape.type === "rect" ? (
-          <View style={{ position: "absolute" }}>
+          <View style={{ position: "absolute" }} key={`resize-view${shape.id}`}>
             <PanGestureHandler
               key={`resize-${shape.id}`}
               ref={resizeRef}
@@ -672,8 +808,103 @@ function Drawing() {
         ) : null
       )}
       {shapes.map((shape: Shape) =>
+        shape.id === selectedShapeId && shape.type === "icon" ? (
+          <View
+            style={{ position: "absolute" }}
+            key={`resize-view-icon${shape.id}`}
+          >
+            <PanGestureHandler
+              key={`resize-${shape.id}`}
+              ref={resizeRef}
+              onGestureEvent={(event) => onResizeGestureEvent(event, shape?.id)}
+              onHandlerStateChange={(event) =>
+                onResizeHandlerStateChange(event, shape?.id)
+              }
+            >
+              <View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x - 20,
+                    top: shape.y - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x + (shape.width || 0) - 20,
+                    top: shape.y - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    // backgroundColor: "red",
+                    position: "absolute",
+                    left: shape.x - 20,
+                    top: shape.y + (shape.height || 0) - 20,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+                <View
+                  style={[
+                    styles.resizer,
+                    {
+                      // backgroundColor: "yellow",
+                      left: shape.x + (shape.width || 0) - 20,
+                      top: shape.y + (shape.height || 0) - 20,
+                    },
+                  ]}
+                >
+                  <View style={styles.resizerHandle} />
+                </View>
+              </View>
+            </PanGestureHandler>
+            <View
+              style={{
+                backgroundColor: "#FFF",
+                width: 40,
+                height: 40,
+                left: shape.x + (shape.width || 0) / 2 - 20,
+                top: shape.y - 45,
+                alignItems: "center",
+                justifyContent: "center",
+                elevation: 20,
+                shadowColor: "#52006A",
+                borderRadius: 5,
+              }}
+            >
+              <TouchableOpacity onPress={() => handleDeleteShape(shape.id)}>
+                <MaterialCommunityIcons name="delete" size={25} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null
+      )}
+      {shapes.map((shape: Shape) =>
         shape.id === selectedShapeId && shape.type === "circle" ? (
-          <View style={{ position: "absolute" }}>
+          <View
+            style={{ position: "absolute" }}
+            key={`resize-view-circle${shape.id}`}
+          >
             <PanGestureHandler
               key={`resize-${shape.id}`}
               ref={resizeRef}

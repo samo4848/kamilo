@@ -1,8 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BottomSheetMethods } from "../custom/bottomSheet/BottomSheet";
 import { Colors } from "../../constants/Colors";
+import { Skia } from "@shopify/react-native-skia";
 
 export const DrawingContext = React.createContext<any>({});
+
+export type SeatsType = {
+  type: "rect" | "circle";
+  id: string;
+  width?: number;
+  height?: number;
+  raduse?: number;
+  tableNumber: number;
+  numberOfSeats: number;
+};
 
 export interface Shape {
   id: string;
@@ -15,7 +26,9 @@ export interface Shape {
   color: string;
   text?: string;
   name?: string;
-  seats?: number;
+  seats?: SeatsType[];
+  image?: ReturnType<typeof Skia.Image.MakeImageFromEncoded> | null;
+  tableNumber?: string;
 }
 export type Floor = {
   id: string;
@@ -38,6 +51,11 @@ function DrawingPageContext({ children }: any) {
   ]);
   const [currentFloor, setCurrentFloor] = useState(1);
   const [floorCounter, setFloorCounter] = useState(1);
+  const [editSeats, setEditSeats] = useState({
+    id: "",
+    tableNumber: 0,
+    numberOfSeats: 0,
+  });
 
   useEffect(() => {
     setShapes(
@@ -65,6 +83,8 @@ function DrawingPageContext({ children }: any) {
         setFloorCounter,
         setFloors,
         floors,
+        editSeats,
+        setEditSeats,
       }}
     >
       {children}
