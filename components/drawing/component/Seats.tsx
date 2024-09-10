@@ -78,35 +78,6 @@ function Seats() {
             },
           ];
         }
-        // const seats: SeatsType[] =
-        //   shape?.seats?.filter(
-        //     (seat) => seat?.tableNumber === seatsState.tableNumber
-        //   ) || [];
-        // if (seats?.length > 0) {
-        //   // setShowError(true);
-        //   //TODO: change the existing seats
-        // newSeats =
-        //   shape.seats?.map((seat: SeatsType) => {
-        //     if (seat.tableNumber === seatsState?.tableNumber) {
-        //       return {
-        //         ...seat,
-        //         numberOfSeats: seatsState?.numberOfSeats,
-        //       };
-        //     } else return seat;
-        //   }) || [];
-        // } else {
-        //   //TODO: create new seats
-        // newSeats = [
-        //   ...(shape?.seats ? shape.seats : []),
-        //   {
-        //     id: Math.random().toString(36).substr(2, 9),
-        //     numberOfSeats: seatsState.numberOfSeats,
-        //     tableNumber: seatsState?.tableNumber,
-        //     type: "circle",
-        //     raduse: 15,
-        //   },
-        // ];
-        // }
         return {
           ...shape,
           seats: newSeats,
@@ -130,14 +101,9 @@ function Seats() {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={{}}>
-            {/* <Text style={styles.header}>Header</Text> */}
             <Text style={styles.text}>Table №</Text>
             <CustomInput getNumberOfSeats={handleGetTableNumber} />
-            {/* {showError && (
-              <Text style={styles.textError}>
-                This table number already exists
-              </Text>
-            )} */}
+
             <View style={{ height: 100 }}>
               <Text style={{ marginBottom: 5 }}>№ of seats</Text>
               <SeatsCounter getCountNumber={handleGetNumberOfSeats} />

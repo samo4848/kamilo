@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import Feather from "@expo/vector-icons/Feather";
 import { ThemedView } from "../ThemedView";
 import {
@@ -6,7 +6,6 @@ import {
   Group,
   Skia,
   Rect,
-  Box,
   Circle,
   SkFont,
   Text as SkiaText,
@@ -18,11 +17,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  Text,
   TouchableWithoutFeedback,
 } from "react-native";
 import {
-  GestureHandlerRootView,
   HandlerStateChangeEvent,
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
@@ -45,12 +42,6 @@ import ResizeShape from "./component/resizeShape";
 import ColorPickerComponent from "./component/ColorPicker";
 import { calculatePosition } from "@/util/calculatePosition";
 
-interface RectShape {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 function Drawing() {
   const {
     shapes,
@@ -91,13 +82,6 @@ function Drawing() {
   const canvasWidthnew = canvasWidth - 42; // Width of the Canvas
   const canvasHeight = 400; // Height of the Canvas
 
-  // useEffect(() => {
-  //   if (font && currentShape?.text) {
-  //     const { width } = font.measureText(currentShape?.text);
-  //     const height = baseFontSize * scale; // Approximation, you can refine it.
-  //     setTextSize({ width, height });
-  //   }
-  // }, [font, currentShape?.text, scale]);
   const saveHistory = (newShapes: Shape[]) => {
     const updatedHistory = history.slice(0, historyIndex + 1);
     setHistory([...updatedHistory, newShapes]);
@@ -129,12 +113,6 @@ function Drawing() {
       } else return item;
     });
     setShapes(newShpaes);
-    // console.log("event", event);
-    // setRect((prevRect) => ({
-    //   ...prevRect,
-    //   x: startX.current + translationX,
-    //   y: startY.current + translationY,
-    // }));
   };
 
   const onMoveHandlerStateChange = (
@@ -150,34 +128,6 @@ function Drawing() {
     }
     saveHistory(shapes);
   };
-
-  // const onResizeGestureEvent = (
-  //   event: PanGestureHandlerGestureEvent,
-  //   shapeId: string
-  // ) => {
-  //   const { translationX, translationY } = event.nativeEvent;
-
-  //   let newWidth = startWidth.current + translationX;
-  //   let newHeight = startHeight.current + translationY;
-  //   const shape = shapes?.filter((item: Shape) => item.id === shapeId)?.[0];
-  //   // Boundary checks for resize event
-  //   if (newWidth < 50) newWidth = 50; // Minimum width
-  //   if (newHeight < 50) newHeight = 50; // Minimum height
-  //   if (shape.x + newWidth > canvasWidth) newWidth = canvasWidth - shape.x;
-  //   if (shape.y + newHeight > canvasHeight) newHeight = canvasHeight - shape.y;
-
-  //   const newShpaes = shapes?.map((item: Shape) => {
-  //     if (item?.id === shapeId) {
-  //       return {
-  //         ...item,
-  //         width: newWidth,
-  //         height: newHeight,
-  //       };
-  //     } else return item;
-  //   });
-
-  //   setShapes(newShpaes);
-  // };
 
   const onResizeGestureEvent = (
     event: PanGestureHandlerGestureEvent,
@@ -358,20 +308,6 @@ function Drawing() {
                 <Group>
                   {shape?.seats?.map((seat: SeatsType, index) => {
                     const { x, y } = calculatePosition(shape, index);
-                    // let x = 0;
-                    // let y = 0;
-                    // if (index % 2) {
-                    //   x = shape.x + (shape?.width || 0) - 30;
-                    //   y = shape.y + 30 * index;
-                    // } else {
-                    //   x = shape.x + 30;
-                    //   y = shape.y + 30 + 30 * index;
-                    // }
-
-                    // if ((shape?.width || 0) < 130) {
-                    //   x = shape.x + 30;
-                    //   y = shape.y + 30 + 50 * index;
-                    // }
                     if (seat.type === "rect") {
                       return (
                         <Group key={"seats-group" + seat?.id}>
@@ -413,44 +349,6 @@ function Drawing() {
                     }
                   })}
                 </Group>
-                {/* <Group>
-                  {(shape?.seats || 0) > 0 &&
-                    [...Array(shape?.seats)?.keys()]?.map((item, index) => {
-                      let x = 0;
-                      let y = 0;
-
-                      if (index % 2) {
-                        x = shape.x + (shape?.width || 0) - 30;
-                        y = shape.y + 30 * index;
-                      } else {
-                        x = shape.x + 30;
-                        y = shape.y + 30 + 30 * index;
-                      }
-
-                      if ((shape?.width || 0) < 130) {
-                        x = shape.x + 30;
-                        y = shape.y + 30 + 50 * index;
-                      }
-                      return (
-                        <Group>
-                          <Circle
-                            cx={x}
-                            cy={y}
-                            r={15}
-                            color={Skia.Color("#FFF")}
-                          />
-                          <SkiaText
-                            key={shape?.id}
-                            font={font}
-                            x={x - 5}
-                            y={y + 5}
-                            color={Colors.dark.black}
-                            text={`${item + 1}`}
-                          />
-                        </Group>
-                      );
-                    })}
-                </Group> */}
               </Group>
             );
           } else if (shape?.type === "circle") {
@@ -499,7 +397,6 @@ function Drawing() {
             left: 0,
             right: 0,
             position: "absolute",
-            // backgroundColor: "red",
           }}
         ></TouchableOpacity>
       </TapGestureHandler>
@@ -518,7 +415,6 @@ function Drawing() {
                     height: 30,
                     borderRadius: 15,
                     position: "absolute",
-                    // backgroundColor: "red",
                     zIndex: 100,
                   }}
                 >
@@ -530,7 +426,6 @@ function Drawing() {
                       height: 30,
                       borderRadius: 15,
                       position: "absolute",
-                      // backgroundColor: "green",
                       zIndex: 100,
                     }}
                   ></View>
@@ -626,7 +521,7 @@ function Drawing() {
               <View
                 style={{
                   position: "absolute",
-                  // backgroundColor: "green",
+
                   width:
                     shape.type === "circle"
                       ? (shape.radius || 1) * 2
@@ -637,17 +532,8 @@ function Drawing() {
                       : shape?.height,
                   left: shape.x,
                   top: shape.y,
-                  // borderRadius: shape.type === "circle" ? shape.radius : 0,
                 }}
-              >
-                {/* <View
-              style={{
-                width: shape.width,
-                height: shape.height,
-                backgroundColor: "trans",
-              }}
-            /> */}
-              </View>
+              ></View>
             </PanGestureHandler>
           );
         } else if (shape.id === selectedShapeId && shape.type === "text") {
@@ -711,9 +597,6 @@ function Drawing() {
                     shadowColor: "#52006A",
                   }}
                 >
-                  {/* <TouchableOpacity onPress={() => handleDeleteShape(shape.id)}>
-                    <MaterialCommunityIcons name="delete" size={25} />
-                  </TouchableOpacity> */}
                   <ColorPickerComponent
                     defaultColor={shape.color}
                     getColorPicker={(color: string) =>
@@ -742,7 +625,6 @@ function Drawing() {
                   style={{
                     width: 40,
                     height: 40,
-                    // backgroundColor: "red",
                     position: "absolute",
                     left: shape.x - 20,
                     top: shape.y - 20,
@@ -756,7 +638,6 @@ function Drawing() {
                   style={{
                     width: 40,
                     height: 40,
-                    // backgroundColor: "red",
                     position: "absolute",
                     left: shape.x + (shape.width || 0) - 20,
                     top: shape.y - 20,
@@ -770,7 +651,6 @@ function Drawing() {
                   style={{
                     width: 40,
                     height: 40,
-                    // backgroundColor: "red",
                     position: "absolute",
                     left: shape.x - 20,
                     top: shape.y + (shape.height || 0) - 20,
@@ -784,7 +664,6 @@ function Drawing() {
                   style={[
                     styles.resizer,
                     {
-                      // backgroundColor: "yellow",
                       left: shape.x + (shape.width || 0) - 20,
                       top: shape.y + (shape.height || 0) - 20,
                     },
@@ -913,18 +792,11 @@ function Drawing() {
                 onResizeHandlerStateChange(event, shape?.id)
               }
             >
-              {/* <ResizeShape
-                x={shape.x}
-                y={shape.y}
-                width={shapes.width || 0}
-                height={shape.height || 0}
-              /> */}
               <View>
                 <View
                   style={{
                     width: 40,
                     height: 40,
-                    // backgroundColor: "red",
                     position: "absolute",
                     left: shape.x - 20,
                     top: shape.y - 20,
@@ -938,7 +810,6 @@ function Drawing() {
                   style={{
                     width: 40,
                     height: 40,
-                    // backgroundColor: "red",
                     position: "absolute",
                     left: shape.x + (shape.radius || 0) * 2 - 20,
                     top: shape.y - 20,
@@ -952,7 +823,6 @@ function Drawing() {
                   style={{
                     width: 40,
                     height: 40,
-                    // backgroundColor: "red",
                     position: "absolute",
                     left: shape.x - 20,
                     top: shape.y + (shape.radius || 0) * 2 - 20,
@@ -966,7 +836,6 @@ function Drawing() {
                   style={[
                     styles.resizer,
                     {
-                      // backgroundColor: "yellow",
                       left: shape.x + (shape.radius || 0) * 2 - 20,
                       top: shape.y + (shape.radius || 0) * 2 - 20,
                     },
@@ -975,19 +844,6 @@ function Drawing() {
                   <View style={styles.resizerHandle} />
                 </View>
               </View>
-              {/* <View
-                style={[
-                  styles.resizer,
-                  {
-                    // backgroundColor: "yellow",
-                    left: shape.x + (shape.radius || 1) * 2 - 20,
-                    top: shape.y + (shape?.radius || 1) * 2 - 20,
-                  },
-                ]}
-              >
-                
-                <View style={styles.resizerHandle} />
-              </View> */}
             </PanGestureHandler>
             <ShapeText
               left={shape.x}

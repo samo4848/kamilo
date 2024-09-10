@@ -4,7 +4,6 @@ import { ThemedText } from "../ThemedText";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Colors } from "@/constants/Colors";
-import { useImage } from "@shopify/react-native-skia";
 import { DrawingContext, Shape } from "../contexts/DrawingPageContext";
 import CaptureIcon from "./CaptureIcon";
 
@@ -21,40 +20,10 @@ interface IPropsCategoryIcon {
 function CategoryIcons({ category, name, icons }: IPropsCategoryIcon) {
   const { setShapes, bottomSheetRef } = useContext(DrawingContext);
   const [selectedIcon, setSelectedIcon] = useState("");
-  // const [iconUriState, setIconUriState] = useState(
-  //   "data:image/svg+xml,%5Bobject%20Object%5D"
-  // );
-  // let iconImage;
-  // if (iconUriState !== "") {
-  //   iconImage = useImage(iconUriState);
-  // }
 
   const handleSelectedMaterialIcon = (name: string) => {
     bottomSheetRef.current?.close();
     setSelectedIcon(name);
-    // const newIcon = {
-    //   type: "icon",
-    //   name: "home",
-    //   size: 40,
-    //   color: "black",
-    //   x: 200,
-    //   y: 200,
-    //   scale: 1,
-    // };
-    // setShapes((prevState: Shape[]) => [...prevState, newIcon]);
-    // const Icon: any = (
-    //   <MaterialCommunityIcons
-    //     name={name}
-    //     size={50}
-    //     color="#000"
-    //     style={{ width: 100, height: 100 }}
-    //   />
-    // );
-    // console.log(Icon);
-    // const iconUri = `data:image/svg+xml,${encodeURIComponent(Icon)}`;
-
-    // setIconUriState(iconUri);
-    // console.log(useOnlineStatus(iconUri));
   };
 
   return (
